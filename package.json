@@ -1,12 +1,13 @@
 {
-  "name": "node-js-getting-started",
-  "version": "0.3.0",
-  "description": "A sample Node.js app using Express 4",
+  "name": "results-api",
+  "version": "0.1.0",
+  "description": "Norwegian Election Results API",
   "engines": {
     "node": "10.x"
   },
   "main": "server.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
   "dependencies": {
@@ -27,5 +28,6 @@
     "heroku",
     "express"
   ],
+  "author": "patricia-gallardo",
   "license": "MIT"
 }

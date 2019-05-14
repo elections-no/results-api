@@ -20,7 +20,7 @@ app.get("/api/election_events", async (req, res) => {
   try {
     const client = await pool.connect()
     const result = await client.query('SELECT * FROM election_event');
-    const results = { 'results': (result) ? result.rows : null};
+    const results = { 'election_events': (result) ? result.rows : null};
     res.status(200).json(results);
     client.release();
   } catch (err) {

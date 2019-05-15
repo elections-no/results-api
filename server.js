@@ -29,6 +29,32 @@ app.get("/api/election_events", async (req, res) => {
   }
 });
 
+app.get("/api/election_types", async (req, res) => {
+    try {
+      const client = await pool.connect()
+      const result = await client.query('SELECT * FROM election_type');
+      const results = { 'election_types': (result) ? result.rows : null};
+      res.status(200).json(results);
+      client.release();
+    } catch (err) {
+      handleError(res, err.message, "Failed to get election types");
+      res.send("Error " + err);
+    }
+});
+
+app.get("/api/elections", async (req, res) => {
+    try {
+      const client = await pool.connect()
+      const result = await client.query('SELECT * FROM election');
+      const results = { 'elections': (result) ? result.rows : null};
+      res.status(200).json(results);
+      client.release();
+    } catch (err) {
+      handleError(res, err.message, "Failed to get elections");
+      res.send("Error " + err);
+    }
+});
+
 app.get("/api/elections/:id", async (req, res) => {
 //   try {
 //     const client = await pool.connect()

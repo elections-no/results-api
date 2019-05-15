@@ -122,14 +122,12 @@ function isMunicipality(document) {
 function isCounty(document) {
   const id = document["id"];
   const level = id["nivaa"];
-  console.log(level);
   return level === "fylke";
 }
 
 function isSamiDistrict(document) {
   const id = document["id"];
   const level = id["nivaa"];
-  console.log(level);
   return level === "samevalgdistrikt";
 }
 

@@ -2,6 +2,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 const axios = require("axios");
 const assert = require("assert");
+var apiParser = require('./api-parser');
 
 var port = process.env.PORT || 3000;
 var app = express();
@@ -89,52 +90,10 @@ const getData = async url => {
   });
 };
 
-function getLinks(document) {
-  const links = document["_links"];
-  const related = links["related"];
-  return related;
-}
-
-function getName(document) {
-  const id = document["id"];
-  const name = id["navn"];
-  return name;
-}
-
-function isPollingPlace(document) {
-  const id = document["id"];
-  const level = id["nivaa"];
-  return level === "stemmekrets";
-}
-
-function isDistrict(document) {
-  const id = document["id"];
-  const level = id["nivaa"];
-  return level === "bydel";
-}
-
-function isMunicipality(document) {
-  const id = document["id"];
-  const level = id["nivaa"];
-  return level === "kommune";
-}
-
-function isCounty(document) {
-  const id = document["id"];
-  const level = id["nivaa"];
-  return level === "fylke";
-}
-
-function isSamiDistrict(document) {
-  const id = document["id"];
-  const level = id["nivaa"];
-  return level === "samevalgdistrikt";
-}
-
 const harvestDataFromPollingPlace = async (pollingPlaceUrl, document) => {
   console.log("PollingPlace : " + pollingPlaceUrl);
-  assert(isPollingPlace(document));
-  const name = getName(document);
+  assert(apiParser.isPollingPlace(document));
+  const name = apiParser.getName(document);
   console.log(name);
 };
 
@@ -146,15 +105,15 @@ const processPollingPlace = async pollingPlaceUrl => {
 
 const processDistrict = async (districtUrl, url) => {
   getData(districtUrl).then(document => {
-    if (isPollingPlace(document)) {
+    if (apiParser.isPollingPlace(document)) {
       harvestDataFromPollingPlace(districtUrl, document);
     } else {
       console.log("District : " + districtUrl);
-      assert(isDistrict(document));
-      const name = getName(document);
+      assert(apiParser.isDistrict(document));
+      const name = apiParser.getName(document);
       console.log(name);
 
-      const links = getLinks(document);
+      const links = apiParser.getLinks(document);
       links.map(link => {
         const pollingPlaceUrl = url + link.href;
         processPollingPlace(pollingPlaceUrl);
@@ -166,11 +125,11 @@ const processDistrict = async (districtUrl, url) => {
 const processMunicipality = async (municipalityUrl, url) => {
   getData(municipalityUrl).then(document => {
     console.log("Municipality : " + municipalityUrl);
-    assert(isMunicipality(document));
-    const name = getName(document);
+    assert(apiParser.isMunicipality(document));
+    const name = apiParser.getName(document);
     console.log(name);
 
-    const links = getLinks(document);
+    const links = apiParser.getLinks(document);
     links.map(link => {
       const districtUrl = url + link.href;
       processDistrict(districtUrl, url);
@@ -180,16 +139,16 @@ const processMunicipality = async (municipalityUrl, url) => {
 
 const processCounty = async (countyUrl, url) => {
   getData(countyUrl).then(document => {
-    if (isSamiDistrict(document)) {
+    if (apiParser.isSamiDistrict(document)) {
       console.log("Sami District : " + countyUrl);
-      assert(isSamiDistrict(document));
+      assert(apiParser.isSamiDistrict(document));
     } else {
       console.log("County : " + countyUrl);
-      assert(isCounty(document));
-      const county = getName(document);
+      assert(apiParser.isCounty(document));
+      const county = apiParser.getName(document);
       console.log(county);
 
-      const links = getLinks(document);
+      const links = apiParser.getLinks(document);
       links.map(link => {
         const municipalityUrl = url + link.href;
         processMunicipality(municipalityUrl, url);
@@ -202,7 +161,7 @@ const processElection = async (electionUrl, url) => {
   getData(electionUrl).then(document => {
     console.log("Election : " + electionUrl);
 
-    const links = getLinks(document);
+    const links = apiParser.getLinks(document);
     links.map(link => {
       const countyUrl = url + link.href;
       processCounty(countyUrl, url);
@@ -214,7 +173,7 @@ const processElectionEvent = async (eventUrl, url) => {
   getData(eventUrl).then(document => {
     console.log("Election Event : " + eventUrl);
 
-    const links = getLinks(document);
+    const links = apiParser.getLinks(document);
     links.map(link => {
       const electionUrl = url + link.href;
       processElection(electionUrl, url);
@@ -226,7 +185,7 @@ const processElectionEventList = async url => {
   getData(url).then(document => {
     console.log(document);
 
-    const links = getLinks(document);
+    const links = apiParser.getLinks(document);
     links.map(link => {
       const eventUrl = url + link.href;
       processElectionEvent(eventUrl, url);

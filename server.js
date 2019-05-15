@@ -1,6 +1,7 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 const axios = require("axios");
+const assert = require("assert");
 
 var port = process.env.PORT || 3000;
 var app = express();
@@ -100,31 +101,74 @@ function getName(document) {
   return name;
 }
 
+function isPollingPlace(document) {
+  const id = document["id"];
+  const level = id["nivaa"];
+  return level === "stemmekrets";
+}
+
+function isDistrict(document) {
+  const id = document["id"];
+  const level = id["nivaa"];
+  return level === "bydel";
+}
+
+function isMunicipality(document) {
+  const id = document["id"];
+  const level = id["nivaa"];
+  return level === "kommune";
+}
+
+function isCounty(document) {
+  const id = document["id"];
+  const level = id["nivaa"];
+  console.log(level);
+  return level === "fylke";
+}
+
+function isSamiDistrict(document) {
+  const id = document["id"];
+  const level = id["nivaa"];
+  console.log(level);
+  return level === "samevalgdistrikt";
+}
+
+const harvestDataFromPollingPlace = async (pollingPlaceUrl, document) => {
+  console.log("PollingPlace : " + pollingPlaceUrl);
+  assert(isPollingPlace(document));
+  const name = getName(document);
+  console.log(name);
+};
+
 const processPollingPlace = async pollingPlaceUrl => {
   getData(pollingPlaceUrl).then(document => {
-    console.log("PollingPlace : " + pollingPlaceUrl);
-    const name = getName(document);
-    console.log(name);
+    harvestDataFromPollingPlace(pollingPlaceUrl, document);
   });
 };
 
 const processDistrict = async (districtUrl, url) => {
   getData(districtUrl).then(document => {
-    console.log("District : " + districtUrl);
-    const name = getName(document);
-    console.log(name);
+    if (isPollingPlace(document)) {
+      harvestDataFromPollingPlace(districtUrl, document);
+    } else {
+      console.log("District : " + districtUrl);
+      assert(isDistrict(document));
+      const name = getName(document);
+      console.log(name);
 
-    const links = getLinks(document);
-    links.map(link => {
-      const pollingPlaceUrl = url + link.href;
-      processPollingPlace(pollingPlaceUrl);
-    });
+      const links = getLinks(document);
+      links.map(link => {
+        const pollingPlaceUrl = url + link.href;
+        processPollingPlace(pollingPlaceUrl);
+      });
+    }
   });
 };
 
 const processMunicipality = async (municipalityUrl, url) => {
   getData(municipalityUrl).then(document => {
     console.log("Municipality : " + municipalityUrl);
+    assert(isMunicipality(document));
     const name = getName(document);
     console.log(name);
 
@@ -138,15 +182,21 @@ const processMunicipality = async (municipalityUrl, url) => {
 
 const processCounty = async (countyUrl, url) => {
   getData(countyUrl).then(document => {
-    console.log("County : " + countyUrl);
-    const county = getName(document);
-    console.log(county);
+    if (isSamiDistrict(document)) {
+      console.log("Sami District : " + countyUrl);
+      assert(isSamiDistrict(document));
+    } else {
+      console.log("County : " + countyUrl);
+      assert(isCounty(document));
+      const county = getName(document);
+      console.log(county);
 
-    const links = getLinks(document);
-    links.map(link => {
-      const municipalityUrl = url + link.href;
-      processMunicipality(municipalityUrl, url);
-    });
+      const links = getLinks(document);
+      links.map(link => {
+        const municipalityUrl = url + link.href;
+        processMunicipality(municipalityUrl, url);
+      });
+    }
   });
 };
 

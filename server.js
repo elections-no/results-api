@@ -56,16 +56,17 @@ app.get("/api/elections", async (req, res) => {
 });
 
 app.get("/api/elections/:id", async (req, res) => {
-//   try {
-//     const client = await pool.connect()
-//     const result = await client.query('SELECT * FROM elections WHERE id == '); // req.params.id
-//     const results = { 'results': (result) ? result.rows : null};
-//     res.status(200).json(results);
-//     client.release();
-//   } catch (err) {
-//     handleError(res, err.message, "Failed to get election events");
-//     res.send("Error " + err);
-//   }
+    try {
+      const client = await pool.connect()
+      const id = parseInt(req.params.id)
+      const result = await client.query('SELECT * FROM election WHERE id = $1', [id]);
+      const results = { 'elections': (result) ? result.rows : null};
+      res.status(200).json(results);
+      client.release();
+    } catch (err) {
+      handleError(res, err.message, "Failed to get election");
+      res.send("Error " + err);
+    }
 });
 
 app.listen(port, function () {

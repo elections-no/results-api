@@ -2,7 +2,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 const axios = require("axios");
 const assert = require("assert");
-var apiParser = require('./api-parser');
+var apiParser = require("./api-parser");
 
 var port = process.env.PORT || 3000;
 var app = express();
@@ -90,34 +90,37 @@ const getData = async url => {
   });
 };
 
-const harvestDataFromPollingPlace = async (pollingPlaceUrl, document) => {
+const processPollingPlace = async (pollingPlaceUrl, document) => {
   console.log("PollingPlace : " + pollingPlaceUrl);
-  assert(apiParser.isPollingPlace(document));
+  assert(apiParser.isLeafNode(document));
   const name = apiParser.getName(document);
   console.log(name);
 };
 
-const processPollingPlace = async pollingPlaceUrl => {
+const processCityDistrictPollingPlace = async pollingPlaceUrl => {
   getData(pollingPlaceUrl).then(document => {
-    harvestDataFromPollingPlace(pollingPlaceUrl, document);
+    processPollingPlace(pollingPlaceUrl, document);
   });
 };
 
-const processDistrict = async (districtUrl, url) => {
-  getData(districtUrl).then(document => {
-    if (apiParser.isPollingPlace(document)) {
-      harvestDataFromPollingPlace(districtUrl, document);
-    } else {
-      console.log("District : " + districtUrl);
-      assert(apiParser.isDistrict(document));
-      const name = apiParser.getName(document);
-      console.log(name);
-
-      const links = apiParser.getLinks(document);
-      links.map(link => {
+const processCityDistrict = async (cityDistrictUrl, document, url) => {
+    console.log("City District : " + cityDistrictUrl);
+    assert(apiParser.isCityDistrict(document));
+    const name = apiParser.getName(document);
+    console.log(name);
+    const links = apiParser.getLinks(document);
+    links.map(link => {
         const pollingPlaceUrl = url + link.href;
-        processPollingPlace(pollingPlaceUrl);
-      });
+        processCityDistrictPollingPlace(pollingPlaceUrl);
+    });
+};
+
+const processSection = async (sectionUrl, url) => {
+  getData(sectionUrl).then(document => {
+    if (apiParser.isPollingPlace(document)) {
+      processPollingPlace(sectionUrl, document);
+    } else {
+      processCityDistrict(sectionUrl, document, url);
     }
   });
 };
@@ -132,27 +135,38 @@ const processMunicipality = async (municipalityUrl, url) => {
     const links = apiParser.getLinks(document);
     links.map(link => {
       const districtUrl = url + link.href;
-      processDistrict(districtUrl, url);
+      processSection(districtUrl, url);
     });
   });
 };
 
-const processCounty = async (countyUrl, url) => {
-  getData(countyUrl).then(document => {
-    if (apiParser.isSamiDistrict(document)) {
-      console.log("Sami District : " + countyUrl);
-      assert(apiParser.isSamiDistrict(document));
-    } else {
-      console.log("County : " + countyUrl);
-      assert(apiParser.isCounty(document));
-      const county = apiParser.getName(document);
-      console.log(county);
+const processCounty = async (countyUrl, document, url) => {
+  console.log("County : " + countyUrl);
+  assert(apiParser.isCounty(document));
+  const county = apiParser.getName(document);
+  console.log(county);
+  const links = apiParser.getLinks(document);
 
-      const links = apiParser.getLinks(document);
-      links.map(link => {
-        const municipalityUrl = url + link.href;
-        processMunicipality(municipalityUrl, url);
-      });
+  links.map(link => {
+    const municipalityUrl = url + link.href;
+    processMunicipality(municipalityUrl, url);
+  });
+};
+
+const processSamiDistrict = async (samiDistrictUrl, document) => {
+  console.log("Sami District : " + samiDistrictUrl);
+  assert(apiParser.isSamiDistrict(document));
+  const samiDistrict = apiParser.getName(document);
+  console.log(samiDistrict);
+  processPollingPlace(samiDistrictUrl, document);
+};
+
+const processRegion = async (regionUrl, url) => {
+  getData(regionUrl).then(document => {
+    if (apiParser.isSamiDistrict(document)) {
+      processSamiDistrict(regionUrl, document);
+    } else {
+      processCounty(regionUrl, document, url);
     }
   });
 };
@@ -163,8 +177,8 @@ const processElection = async (electionUrl, url) => {
 
     const links = apiParser.getLinks(document);
     links.map(link => {
-      const countyUrl = url + link.href;
-      processCounty(countyUrl, url);
+      const regionUrl = url + link.href;
+      processRegion(regionUrl, url);
     });
   });
 };

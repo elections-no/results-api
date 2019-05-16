@@ -6,6 +6,10 @@ function getLinks(document) {
     return related;
 }
 
+function isLeafNode(document) {
+    return getLinks(document).length === 0;
+}
+
 function getName(document) {
     const id = document["id"];
     const name = id["navn"];
@@ -30,7 +34,7 @@ function isPollingPlace(document) {
     return level === "stemmekrets";
 }
 
-function isDistrict(document) {
+function isCityDistrict(document) {
     const level = getLevel(document);
     return level === "bydel";
 }
@@ -51,9 +55,10 @@ function isSamiDistrict(document) {
 }
 
 exports.getLinks = getLinks;
+exports.isLeafNode = isLeafNode;
 exports.getName = getName;
 exports.isPollingPlace = isPollingPlace;
-exports.isDistrict = isDistrict;
+exports.isCityDistrict = isCityDistrict;
 exports.isMunicipality = isMunicipality;
 exports.isCounty = isCounty;
 exports.isSamiDistrict = isSamiDistrict;

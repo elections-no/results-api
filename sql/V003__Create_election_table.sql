@@ -1,0 +1,1 @@
+CREATE TABLE election (id serial PRIMARY KEY, election_event INTEGER REFERENCES election_event(id), election_type INTEGER REFERENCES election_type(id));

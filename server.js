@@ -90,52 +90,102 @@ const getData = async url => {
   });
 };
 
-const processPollingPlace = async (pollingPlaceUrl, document) => {
+// const addPollingPlace = async (pollingPlaceInfo) => {
+
+//   const client = await pool.connect();
+
+//   const query = {
+//     text:
+//       "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, 5$, 6$)",
+//     values: [
+//       pollingPlaceInfo.nr,
+//       pollingPlaceInfo.name,
+//       pollingPlaceInfo.city_district,
+//       pollingPlaceInfo.municipality,
+//       pollingPlaceInfo.county,
+//       pollingPlaceInfo.polling_place_type
+//     ]
+//   };
+
+//   client.query(query)
+//     .then(res => console.log(res.rows[0]))
+//     .catch(e => console.error(e.stack));
+// };
+
+const EMPTY_PARENT_INFO = {
+    city_district: '',
+    municipality: '',
+    county: ''
+};
+
+const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
   console.log("PollingPlace : " + pollingPlaceUrl);
   assert(apiParser.isLeafNode(document));
   const name = apiParser.getName(document);
   console.log(name);
+  const info = apiParser.getPollingPlaceInfo(document, parentInfo);
+  console.log(info);
+
+  if (apiParser.isSamiDistrict(document)) {
+    assert(info.nr.length > 0);
+    assert(info.name.length > 0);
+    assert(info.city_district === '');
+    assert(info.municipality === '');
+    assert(info.county === '');
+    assert(info.polling_place_type === apiParser.SAMI_POLLING_PLACE_TYPE);
+  } else {
+    assert(info.nr.length > 0);
+    assert(info.name.length > 0);
+    assert(info.municipality.length > 0);
+    assert(info.county.length > 0);
+    assert(info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE);
+  }
+
+//   addPollingPlace(info);
 };
 
-const processCityDistrictPollingPlace = async pollingPlaceUrl => {
+const processCityDistrictPollingPlace = async (parentInfo, pollingPlaceUrl) => {
   getData(pollingPlaceUrl).then(document => {
-    processPollingPlace(pollingPlaceUrl, document);
+    processPollingPlace(parentInfo, pollingPlaceUrl, document);
   });
 };
 
-const processCityDistrict = async (cityDistrictUrl, document, url) => {
+const processCityDistrict = async (parentInfo, cityDistrictUrl, document, url) => {
     console.log("City District : " + cityDistrictUrl);
     assert(apiParser.isCityDistrict(document));
     const name = apiParser.getName(document);
     console.log(name);
+    parentInfo.city_district = apiParser.getNumber(document);
+
     const links = apiParser.getLinks(document);
     links.map(link => {
         const pollingPlaceUrl = url + link.href;
-        processCityDistrictPollingPlace(pollingPlaceUrl);
+        processCityDistrictPollingPlace(parentInfo, pollingPlaceUrl);
     });
 };
 
-const processSection = async (sectionUrl, url) => {
+const processSection = async (parentInfo, sectionUrl, url) => {
   getData(sectionUrl).then(document => {
     if (apiParser.isPollingPlace(document)) {
-      processPollingPlace(sectionUrl, document);
+      processPollingPlace(parentInfo, sectionUrl, document);
     } else {
-      processCityDistrict(sectionUrl, document, url);
+      processCityDistrict(parentInfo, sectionUrl, document, url);
     }
   });
 };
 
-const processMunicipality = async (municipalityUrl, url) => {
+const processMunicipality = async (parentInfo, municipalityUrl, url) => {
   getData(municipalityUrl).then(document => {
     console.log("Municipality : " + municipalityUrl);
     assert(apiParser.isMunicipality(document));
     const name = apiParser.getName(document);
     console.log(name);
+    parentInfo.municipality = apiParser.getNumber(document);
 
     const links = apiParser.getLinks(document);
     links.map(link => {
       const districtUrl = url + link.href;
-      processSection(districtUrl, url);
+      processSection(parentInfo, districtUrl, url);
     });
   });
 };
@@ -147,9 +197,15 @@ const processCounty = async (countyUrl, document, url) => {
   console.log(county);
   const links = apiParser.getLinks(document);
 
+  let parentInfo = {
+    city_district: '',
+    municipality: '',
+    county: apiParser.getNumber(document)
+  }
+
   links.map(link => {
     const municipalityUrl = url + link.href;
-    processMunicipality(municipalityUrl, url);
+    processMunicipality(parentInfo, municipalityUrl, url);
   });
 };
 
@@ -158,7 +214,7 @@ const processSamiDistrict = async (samiDistrictUrl, document) => {
   assert(apiParser.isSamiDistrict(document));
   const samiDistrict = apiParser.getName(document);
   console.log(samiDistrict);
-  processPollingPlace(samiDistrictUrl, document);
+  processPollingPlace(samiDistrictUrl, document, EMPTY_PARENT_INFO);
 };
 
 const processRegion = async (regionUrl, url) => {

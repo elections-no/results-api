@@ -16,6 +16,12 @@ function getName(document) {
     return name;
 }
 
+function getNumber(document) {
+    const id = document["id"];
+    const nr = id["nr"];
+    return nr;
+}
+
 function getLevel(document) {
     const id = document["id"];
 
@@ -54,11 +60,44 @@ function isSamiDistrict(document) {
     return level === "samevalgdistrikt";
 }
 
+const SAMI_POLLING_PLACE_TYPE = 1;
+const REGULAR_POLLING_PLACE_TYPE = 2;
+
+function getPollingPlaceType(document) {
+  if (isSamiDistrict(document)) return SAMI_POLLING_PLACE_TYPE;
+  else return REGULAR_POLLING_PLACE_TYPE;
+}
+
+function getPollingPlaceInfo(document, parentInfo) {
+    let info = {
+      nr: "",
+      name: "",
+      city_district: 0,
+      municipality: 0,
+      county: 0,
+      polling_place_type: 0
+    };
+
+    info.nr = getNumber(document);
+    info.name = getName(document);
+    info.polling_place_type = getPollingPlaceType(document);
+
+    if (parentInfo.city_district) info.city_district = parentInfo.city_district;
+    if (parentInfo.municipality) info.municipality = parentInfo.municipality;
+    if (parentInfo.county) info.county = parentInfo.county;
+
+    return info;
+}
+
 exports.getLinks = getLinks;
 exports.isLeafNode = isLeafNode;
 exports.getName = getName;
+exports.getNumber = getNumber;
 exports.isPollingPlace = isPollingPlace;
 exports.isCityDistrict = isCityDistrict;
 exports.isMunicipality = isMunicipality;
 exports.isCounty = isCounty;
 exports.isSamiDistrict = isSamiDistrict;
+exports.getPollingPlaceInfo = getPollingPlaceInfo;
+exports.SAMI_POLLING_PLACE_TYPE = SAMI_POLLING_PLACE_TYPE;
+exports.REGULAR_POLLING_PLACE_TYPE = REGULAR_POLLING_PLACE_TYPE;

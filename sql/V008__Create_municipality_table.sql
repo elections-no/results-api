@@ -1,0 +1,1 @@
+CREATE TABLE municipality (id serial PRIMARY KEY, nr VARCHAR (10) UNIQUE NOT NULL, name VARCHAR (50) NOT NULL, county INTEGER REFERENCES county(id) NOT NULL);

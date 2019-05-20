@@ -98,7 +98,7 @@ const getData = async url => {
 
 function insertRegularPollingStationQuery(info) {
     return {
-        text: "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6)",
+        text: "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT (nr) DO NOTHING",
         values: [
             info.nr,
             info.name,
@@ -179,12 +179,31 @@ const processCityDistrictPollingPlace = async (parentInfo, pollingPlaceUrl) => {
   });
 };
 
+function insertCityDistrict(info) {
+    return {
+        text: "INSERT INTO city_district (nr, name, municipality) VALUES($1, $2, $3) ON CONFLICT (nr) DO NOTHING",
+        values: [
+            info.nr,
+            info.name,
+            info.municipality
+        ]
+    };
+}
+
 const processCityDistrict = async (parentInfo, cityDistrictUrl, document, url) => {
     console.log("City District : " + cityDistrictUrl);
     assert(apiParser.isCityDistrict(document));
-    const name = apiParser.getName(document);
-    console.log(name);
-    parentInfo.city_district = apiParser.getNumber(document);
+
+    let info = {
+        nr: apiParser.getNumber(document),
+        name: apiParser.getName(document),
+        municipality: parentInfo.municipality
+    };
+
+    console.log(info.name);
+    parentInfo.city_district = info.nr;
+
+    runQuery(insertCityDistrict(info));
 
     const links = apiParser.getLinks(document);
     links.map(link => {
@@ -206,13 +225,32 @@ const processSection = async (parentInfo, sectionUrl, url) => {
   });
 };
 
+function insertMunicipality(info) {
+    return {
+        text: "INSERT INTO municipality (nr, name, county) VALUES($1, $2, $3) ON CONFLICT (nr) DO NOTHING",
+        values: [
+            info.nr,
+            info.name,
+            info.county
+        ]
+    };
+}
+
 const processMunicipality = async (parentInfo, municipalityUrl, url) => {
   getData(municipalityUrl).then(document => {
     console.log("Municipality : " + municipalityUrl);
     assert(apiParser.isMunicipality(document));
-    const name = apiParser.getName(document);
-    console.log(name);
-    parentInfo.municipality = apiParser.getNumber(document);
+
+    let info = {
+        nr: apiParser.getNumber(document),
+        name: apiParser.getName(document),
+        county: parentInfo.county
+    };
+
+    console.log(info.name);
+    parentInfo.municipality = info.nr;
+
+    runQuery(insertMunicipality(info));
 
     const links = apiParser.getLinks(document);
     links.map(link => {

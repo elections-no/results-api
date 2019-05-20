@@ -110,6 +110,19 @@ function insertRegularPollingStationQuery(info) {
     };
 }
 
+function insertRegularPollingStationNoCityDistrictQuery(info) {
+    return {
+        text: "INSERT INTO polling_place (nr, name, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5) ON CONFLICT (nr) DO NOTHING",
+        values: [
+            info.nr,
+            info.name,
+            info.municipality,
+            info.county,
+            info.polling_place_type
+        ]
+    };
+}
+
 function insertSamiPollingStationQuery(info) {
     return {
         text: "INSERT INTO polling_place (nr, name, polling_place_type) VALUES($1, $2, $3) ON CONFLICT (nr) DO NOTHING",
@@ -166,7 +179,9 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
     assert(info.county.length > 0);
     assert(info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE);
 
-    runQuery(insertRegularPollingStationQuery(info));
+    if (info.city_district)
+      runQuery(insertRegularPollingStationQuery(info));
+    else runQuery(insertRegularPollingStationNoCityDistrictQuery(info));
   }
 };
 

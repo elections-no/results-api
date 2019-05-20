@@ -22,7 +22,14 @@ function getNumber(document) {
     return nr;
 }
 
+function isObject(obj) {
+  return obj === Object(obj);
+}
+
 function getLevel(document) {
+
+    assert(isObject(document), "Document is not an object, document is a " + typeof document);
+
     const id = document["id"];
 
     if (id) {

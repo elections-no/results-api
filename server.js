@@ -118,12 +118,6 @@ const getData = async url => {
 //     .catch(e => console.error(e.stack));
 // };
 
-const EMPTY_PARENT_INFO = {
-    city_district: '',
-    municipality: '',
-    county: ''
-};
-
 const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
   console.log("PollingPlace : " + pollingPlaceUrl);
   assert(apiParser.isLeafNode(document));
@@ -229,7 +223,14 @@ const processSamiDistrict = async (samiDistrictUrl, document) => {
   assert(apiParser.isSamiDistrict(document));
   const samiDistrict = apiParser.getName(document);
   console.log(samiDistrict);
-  processPollingPlace(samiDistrictUrl, document, EMPTY_PARENT_INFO);
+
+  let parentInfo = {
+    city_district: '',
+    municipality: '',
+    county: ''
+  };
+
+  processPollingPlace(parentInfo, samiDistrictUrl, document);
 };
 
 const processRegion = async (regionUrl, url) => {

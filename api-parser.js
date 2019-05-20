@@ -70,11 +70,11 @@ function getPollingPlaceType(document) {
 
 function getPollingPlaceInfo(document, parentInfo) {
     let info = {
-      nr: "",
-      name: "",
-      city_district: 0,
-      municipality: 0,
-      county: 0,
+      nr: '',
+      name: '',
+      city_district: '',
+      municipality: '',
+      county: '',
       polling_place_type: 0
     };
 

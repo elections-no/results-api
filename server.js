@@ -85,9 +85,15 @@ const getData = async url => {
     //       key: fs.readFileSync(`${path}KEY.pem`),
   });
 
-  return axios.get(url, { httpsAgent }).then(function(response) {
-    return response.data;
-  });
+  return axios
+    .get(url, { httpsAgent })
+    .then(response => {
+      return response.data;
+    })
+    .catch(error => {
+      console.log("ERROR on loading '" + url + "' : " + error.message);
+      throw(error);
+    });
 };
 
 // const addPollingPlace = async (pollingPlaceInfo) => {
@@ -147,6 +153,9 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
 const processCityDistrictPollingPlace = async (parentInfo, pollingPlaceUrl) => {
   getData(pollingPlaceUrl).then(document => {
     processPollingPlace(parentInfo, pollingPlaceUrl, document);
+  })
+  .catch(error => {
+    console.log("ERROR on loading CityDistrictPollingPlace '" + pollingPlaceUrl + "' : " + error.message);
   });
 };
 
@@ -171,6 +180,9 @@ const processSection = async (parentInfo, sectionUrl, url) => {
     } else {
       processCityDistrict(parentInfo, sectionUrl, document, url);
     }
+  })
+  .catch(error => {
+    console.log("ERROR on loading Section '" + sectionUrl + "' : " + error.message);
   });
 };
 
@@ -187,6 +199,9 @@ const processMunicipality = async (parentInfo, municipalityUrl, url) => {
       const districtUrl = url + link.href;
       processSection(parentInfo, districtUrl, url);
     });
+  })
+  .catch(error => {
+    console.log("ERROR on loading Municipality '" + municipalityUrl + "' : " + error.message);
   });
 };
 
@@ -224,6 +239,9 @@ const processRegion = async (regionUrl, url) => {
     } else {
       processCounty(regionUrl, document, url);
     }
+  })
+  .catch(error => {
+    console.log("ERROR on loading Region '" + regionUrl + "' : " + error.message);
   });
 };
 
@@ -236,6 +254,9 @@ const processElection = async (electionUrl, url) => {
       const regionUrl = url + link.href;
       processRegion(regionUrl, url);
     });
+  })
+  .catch(error => {
+    console.log("ERROR on loading Election '" + electionUrl + "' : " + error.message);
   });
 };
 
@@ -248,6 +269,9 @@ const processElectionEvent = async (eventUrl, url) => {
       const electionUrl = url + link.href;
       processElection(electionUrl, url);
     });
+  })
+  .catch(error => {
+    console.log("ERROR on loading ElectionEvent '" + eventUrl + "' : " + error.message);
   });
 };
 
@@ -260,6 +284,9 @@ const processElectionEventList = async url => {
       const eventUrl = url + link.href;
       processElectionEvent(eventUrl, url);
     });
+  })
+  .catch(error => {
+    console.log("ERROR on loading ElectionEventList '" + url + "' : " + error.message);
   });
 };
 

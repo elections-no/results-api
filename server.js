@@ -96,7 +96,7 @@ const getData = async url => {
     });
 };
 
-function getRegularInsert(info) {
+function insertRegularPollingStationQuery(info) {
     return {
         text: "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6)",
         values: [
@@ -110,9 +110,9 @@ function getRegularInsert(info) {
     };
 }
 
-function getSamiInsert(info) {
+function insertSamiPollingStationQuery(info) {
     return {
-        text: "INSERT INTO polling_place (nr, name, polling_place_type) VALUES($1, $2, $3)",
+        text: "INSERT INTO polling_place (nr, name, polling_place_type) VALUES($1, $2, $3) ON CONFLICT (nr) DO NOTHING",
         values: [
             info.nr,
             info.name,
@@ -121,30 +121,24 @@ function getSamiInsert(info) {
     };
 }
 
-const addPollingPlace = async info => {
-  console.log("addPollingPlace " + JSON.stringify(info));
+const runQuery = async client_query => {
 
-  const insert_query =
-    info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE
-      ? getRegularInsert(info)
-      : getSamiInsert(info);
-
-  console.log("addPollingPlace query " + JSON.stringify(insert_query));
+  console.log("runQuery query " + JSON.stringify(client_query));
 
   pool.connect().then(client => {
     client
-      .query(insert_query.text, insert_query.values)
+      .query(client_query.text, client_query.values)
       .then(res => {
         client.release();
-        console.log("addPollingPlace INSERTED : " + res.rows[0]);
+        console.log("runQuery INSERTED : " + res.rows[0]);
       })
       .catch(e => {
         client.release();
-        console.log("addPollingPlace ERROR : " + e.stack);
+        console.log("runQuery ERROR : " + e.stack);
       });
   })
   .catch(error => {
-    console.log("addPollingPlace ERROR on inserting '" + JSON.stringify(insert_query) + "' : " + error.message);
+    console.log("runQuery ERROR on inserting '" + JSON.stringify(client_query) + "' : " + error.message);
   });
 };
 
@@ -154,7 +148,7 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
   const name = apiParser.getName(document);
   console.log(name);
   const info = apiParser.getPollingPlaceInfo(document, parentInfo);
-  console.log(info);
+  console.log("processPollingPlace " + JSON.stringify(info));
 
   if (apiParser.isSamiDistrict(document)) {
     assert(info.nr.length > 0);
@@ -164,16 +158,16 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
     assert(info.county === '');
     assert(info.polling_place_type === apiParser.SAMI_POLLING_PLACE_TYPE);
 
-    addPollingPlace(info);
+    runQuery(insertSamiPollingStationQuery(info));
   } else {
     assert(info.nr.length > 0);
     assert(info.name.length > 0);
     assert(info.municipality.length > 0);
     assert(info.county.length > 0);
     assert(info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE);
-  }
 
-//   addPollingPlace(info);
+    // runQuery(insertRegularPollingStationQuery(info));
+  }
 };
 
 const processCityDistrictPollingPlace = async (parentInfo, pollingPlaceUrl) => {

@@ -96,27 +96,40 @@ const getData = async url => {
     });
 };
 
-// const addPollingPlace = async (pollingPlaceInfo) => {
+const addPollingPlace = async pollingPlaceInfo => {
+  console.log("addPollingPlace " + JSON.stringify(pollingPlaceInfo));
 
-//   const client = await pool.connect();
+  const insert_query = {
+    text:
+      "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6)",
+    values: [
+      pollingPlaceInfo.nr,
+      pollingPlaceInfo.name,
+      pollingPlaceInfo.city_district,
+      pollingPlaceInfo.municipality,
+      pollingPlaceInfo.county,
+      pollingPlaceInfo.polling_place_type
+    ]
+  };
 
-//   const query = {
-//     text:
-//       "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, 5$, 6$)",
-//     values: [
-//       pollingPlaceInfo.nr,
-//       pollingPlaceInfo.name,
-//       pollingPlaceInfo.city_district,
-//       pollingPlaceInfo.municipality,
-//       pollingPlaceInfo.county,
-//       pollingPlaceInfo.polling_place_type
-//     ]
-//   };
+  console.log("addPollingPlace query " + JSON.stringify(insert_query));
 
-//   client.query(query)
-//     .then(res => console.log(res.rows[0]))
-//     .catch(e => console.error(e.stack));
-// };
+  pool.connect().then(client => {
+    client
+      .query(insert_query.text, insert_query.values)
+      .then(res => {
+        client.release();
+        console.log("addPollingPlace INSERTED : " + res.rows[0]);
+      })
+      .catch(e => {
+        client.release();
+        console.log("addPollingPlace ERROR : " + e.stack);
+      });
+  })
+  .catch(error => {
+    console.log("addPollingPlace ERROR on inserting '" + JSON.stringify(insert_query) + "' : " + error.message);
+  });
+};
 
 const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
   console.log("PollingPlace : " + pollingPlaceUrl);
@@ -133,6 +146,8 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
     assert(info.municipality === '');
     assert(info.county === '');
     assert(info.polling_place_type === apiParser.SAMI_POLLING_PLACE_TYPE);
+
+    addPollingPlace(info);
   } else {
     assert(info.nr.length > 0);
     assert(info.name.length > 0);

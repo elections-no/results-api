@@ -166,7 +166,7 @@ const processPollingPlace = async (parentInfo, pollingPlaceUrl, document) => {
     assert(info.county.length > 0);
     assert(info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE);
 
-    // runQuery(insertRegularPollingStationQuery(info));
+    runQuery(insertRegularPollingStationQuery(info));
   }
 };
 

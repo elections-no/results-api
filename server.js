@@ -215,7 +215,7 @@ const processCityDistrict = async (parentInfo, cityDistrictUrl, document, url) =
         municipality: parentInfo.municipality
     };
 
-    console.log(info.name);
+    console.log(info.name + " : " + info.nr);
     parentInfo.city_district = info.nr;
 
     runQuery(insertCityDistrict(info));

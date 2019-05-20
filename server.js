@@ -96,21 +96,38 @@ const getData = async url => {
     });
 };
 
-const addPollingPlace = async pollingPlaceInfo => {
-  console.log("addPollingPlace " + JSON.stringify(pollingPlaceInfo));
+function getRegularInsert(info) {
+    return {
+        text: "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6)",
+        values: [
+            info.nr,
+            info.name,
+            info.city_district,
+            info.municipality,
+            info.county,
+            info.polling_place_type
+        ]
+    };
+}
 
-  const insert_query = {
-    text:
-      "INSERT INTO polling_place (nr, name, city_district, municipality, county, polling_place_type) VALUES($1, $2, $3, $4, $5, $6)",
-    values: [
-      pollingPlaceInfo.nr,
-      pollingPlaceInfo.name,
-      pollingPlaceInfo.city_district,
-      pollingPlaceInfo.municipality,
-      pollingPlaceInfo.county,
-      pollingPlaceInfo.polling_place_type
-    ]
-  };
+function getSamiInsert(info) {
+    return {
+        text: "INSERT INTO polling_place (nr, name, polling_place_type) VALUES($1, $2, $3)",
+        values: [
+            info.nr,
+            info.name,
+            info.polling_place_type
+        ]
+    };
+}
+
+const addPollingPlace = async info => {
+  console.log("addPollingPlace " + JSON.stringify(info));
+
+  const insert_query =
+    info.polling_place_type === apiParser.REGULAR_POLLING_PLACE_TYPE
+      ? getRegularInsert(info)
+      : getSamiInsert(info);
 
   console.log("addPollingPlace query " + JSON.stringify(insert_query));
 

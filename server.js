@@ -134,7 +134,7 @@ const runQuery = async client_query => {
       })
       .catch(e => {
         client.release();
-        console.log("runQuery ERROR : " + e.stack);
+        console.log("runQuery ERROR : '" + JSON.stringify(client_query) + "' : " + e.stack);
       });
   })
   .catch(error => {
